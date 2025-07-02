@@ -20,20 +20,20 @@ const db = getFirestore(app);
 
 // Bot token and configuration
 const bot = new Telegraf('7942798139:AAEyX1V8Yktht6oGeiUJLkOqHzQyIc04uKs');
-const ADMIN_ID = 5483526431;
+const ADMIN_ID = 5543574742;
 const PRIVATE_CHANNEL_ID = -1002473076839;
 const STATIC_CHANNEL_LINK = 'https://t.me/rereadc'; // Your channel's static link
-const START_IMAGE = 'https://res.cloudinary.com/dodw9wq5x/image/upload/v1751482696/photo_2025-07-03_00-03-03_hkgglk.jpg'; // Replace with your image file_id or URL
+const START_IMAGE = 'https://res.cloudinary.com/dodw9wq5x/image/upload/v1751482696/photo_2025-07-03_00-03-03_hkgglk.jpg'; // Your image URL
 
 // Initialize tariffs
 async function initTariffs() {
     try {
         const tariffsRef = collection(db, 'tariffs');
-        await setDoc(doc(tariffsRef, 'weekly'), {
-            tariff_name: 'weekly',
-            description: 'Haftalik obuna 99  ming uzs',
-            price: 10.0,
-            duration_days: 7
+        await setDoc(doc(tariffsRef, 'vip'), {
+            tariff_name: 'vip',
+            description: 'VIP obuna 299 ming uzs',
+            price: 100.0,
+            duration_days: 365
         });
         await setDoc(doc(tariffsRef, 'monthly'), {
             tariff_name: 'monthly',
@@ -41,11 +41,11 @@ async function initTariffs() {
             price: 30.0,
             duration_days: 30
         });
-        await setDoc(doc(tariffsRef, 'vip'), {
-            tariff_name: 'vip',
-            description: 'VIP obuna 299 ming uzs',
-            price: 100.0,
-            duration_days: 365
+        await setDoc(doc(tariffsRef, 'weekly'), {
+            tariff_name: 'weekly',
+            description: 'Haftalik obuna 99 ming uzs',
+            price: 10.0,
+            duration_days: 7
         });
         console.log('Tariffs initialized');
     } catch (error) {
@@ -58,7 +58,10 @@ bot.command('start', async (ctx) => {
     try {
         const tariffsRef = collection(db, 'tariffs');
         const snapshot = await getDocs(tariffsRef);
-        const tariffs = snapshot.docs.map(doc => doc.data());
+        const tariffs = snapshot.docs.map(doc => doc.data()).sort((a, b) => {
+            const order = { vip: 0, monthly: 1, weekly: 2 };
+            return order[a.tariff_name] - order[b.tariff_name];
+        });
         const keyboard = {
             inline_keyboard: tariffs.map(tariff => [
                 { text: tariff.description, callback_data: tariff.tariff_name }
@@ -83,7 +86,7 @@ bot.action(['weekly', 'monthly', 'vip'], async (ctx) => {
             timestamp: moment().toISOString()
         }, { merge: true });
         await ctx.answerCbQuery();
-        await ctx.reply('To\'lovni shu 4073420049274529 kartaga tashang\nТ. Иzzat\nIltimos, to\'lov kvitansiyasi fotosuratini yuboring.');
+        await ctx.reply('To\'lovni shu 4073420049274529 kartaga tashang\nТ. Иzzat\nIltimos to\'lov xaqida Screenshot yuboring');
         console.log(`User ${ctx.from.id} selected tariff: ${tariff}`);
     } catch (error) {
         console.error('Error in tariff selection:', error);
