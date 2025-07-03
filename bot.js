@@ -278,19 +278,16 @@ setInterval(checkSubscriptions, 24 * 60 * 60 * 1000);
 async function main() {
     try {
         await initTariffs();
-        // Bind to port for the platform
-        const port = process.env.PORT || 3000;
+        // Bind to port for Render
+        const port = process.env.PORT || 10000; // Match Render's assigned port
+        const domain = process.env.RENDER_EXTERNAL_URL || 'https://your-render-app.onrender.com'; // Use Render's external URL
         bot.launch({
             webhook: {
-                domain: process.env.DOMAIN || 'https://your-app-domain.com',
+                domain: domain,
                 port: port
             }
         });
-        console.log(`Bot is running on port ${port}...`);
-
-        // Fallback to polling if webhook fails
-        bot.startPolling();
-        console.log('Bot polling started as fallback...');
+        console.log(`Bot is running on port ${port} with domain ${domain}...`);
 
         // Check bot and channel status
         const botInfo = await bot.telegram.getMe();
