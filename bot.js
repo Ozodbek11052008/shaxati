@@ -280,17 +280,38 @@ async function main() {
         await initTariffs();
         // Bind to port for Render
         const port = process.env.PORT || 10000; // Match Render's assigned port
-        const domain = process.env.RENDER_EXTERNAL_URL || 'https://shaxati.onrender.com/'; // Use Render's external URL
-        console.log(`Setting webhook to ${domain}:${port}...`);
-        
-        // Set or update webhook with Telegram
-        await bot.telegram.setWebhook(`${domain}/bot${bot.secretPath || ''}`, {
-            max_connections: 1
-        }).then(() => {
-            console.log('Webhook set successfully');
-        }).catch(error => {
-            console.error('Failed to set webhook:', error);
-        });
+        const domain = process.env.RENDER_EXTERNAL_URL || 'https://shaxati.onrender.com'; // Use your Render URL
+        console.log(`Checking existing webhook for ${domain}:${port}...`);
+
+        // Check current webhook status
+        const webhookInfo = await bot.telegram.getWebhookInfo();
+        const currentUrl = webhookInfo.url;
+        console.log(`Current webhook URL: ${currentUrl}`);
+
+        // Set webhook only if it differs or is not set
+        if (!currentUrl || !currentUrl.includes(domain)) {
+            console.log(`Setting webhook to ${domain}/bot${bot.secretPath || ''}...`);
+            for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                    await bot.telegram.setWebhook(`${domain}/bot${bot.secretPath || ''}`, {
+                        max_connections: 1
+                    });
+                    console.log('Webhook set successfully');
+                    break;
+                } catch (error) {
+                    if (error.response && error.response.error_code === 429) {
+                        const retryAfter = error.response.parameters.retry_after || 1;
+                        console.warn(`Rate limited, retrying after ${retryAfter} seconds... (Attempt ${attempt}/5)`);
+                        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                        if (attempt === 5) throw error;
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        } else {
+            console.log('Webhook already configured correctly, skipping setup');
+        }
 
         bot.launch({
             webhook: {
