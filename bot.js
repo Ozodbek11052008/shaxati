@@ -274,11 +274,24 @@ async function checkSubscriptions() {
 // Run subscription check daily
 setInterval(checkSubscriptions, 24 * 60 * 60 * 1000);
 
-// Start the bot
+// Start the bot with port binding
 async function main() {
     try {
         await initTariffs();
-        await bot.launch();
+        // Bind to port for the platform
+        const port = process.env.PORT || 3000;
+        bot.launch({
+            webhook: {
+                domain: process.env.DOMAIN || 'https://your-app-domain.com',
+                port: port
+            }
+        });
+        console.log(`Bot is running on port ${port}...`);
+
+        // Fallback to polling if webhook fails
+        bot.startPolling();
+        console.log('Bot polling started as fallback...');
+
         // Check bot and channel status
         const botInfo = await bot.telegram.getMe();
         console.log(`Bot info: ID=${botInfo.id}, Username=@${botInfo.username}`);
@@ -287,7 +300,6 @@ async function main() {
         }).catch(error => {
             console.error('Error verifying channel ID:', error);
         });
-        console.log('Bot is running...');
     } catch (error) {
         console.error('Error starting bot:', error);
     }
