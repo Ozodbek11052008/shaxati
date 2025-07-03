@@ -22,7 +22,7 @@ const db = getFirestore(app);
 const bot = new Telegraf('7942798139:AAEyX1V8Yktht6oGeiUJLkOqHzQyIc04uKs');
 const ADMIN_ID = 5543574742;
 const PRIVATE_CHANNEL_ID = -1002473076839;
-const STATIC_CHANNEL_LINK = 'https://t.me/rereadc'; // Your channel's static link
+const STATIC_CHANNEL_LINK = 'https://t.me/+ZxuZsXg9ic42MTQy'; // Your channel's static link
 const START_IMAGE = 'https://res.cloudinary.com/dodw9wq5x/image/upload/v1751482696/photo_2025-07-03_00-03-03_hkgglk.jpg'; // Your image URL
 
 // Initialize tariffs
@@ -274,13 +274,24 @@ async function checkSubscriptions() {
 // Run subscription check daily
 setInterval(checkSubscriptions, 24 * 60 * 60 * 1000);
 
-// Start the bot with port binding
+// Start the bot with port binding and webhook setup
 async function main() {
     try {
         await initTariffs();
         // Bind to port for Render
         const port = process.env.PORT || 10000; // Match Render's assigned port
-        const domain = process.env.RENDER_EXTERNAL_URL || 'https://your-render-app.onrender.com'; // Use Render's external URL
+        const domain = process.env.RENDER_EXTERNAL_URL || 'https://shaxati.onrender.com/'; // Use Render's external URL
+        console.log(`Setting webhook to ${domain}:${port}...`);
+        
+        // Set or update webhook with Telegram
+        await bot.telegram.setWebhook(`${domain}/bot${bot.secretPath || ''}`, {
+            max_connections: 1
+        }).then(() => {
+            console.log('Webhook set successfully');
+        }).catch(error => {
+            console.error('Failed to set webhook:', error);
+        });
+
         bot.launch({
             webhook: {
                 domain: domain,
@@ -300,6 +311,14 @@ async function main() {
     } catch (error) {
         console.error('Error starting bot:', error);
     }
+
+    // Keep the process alive
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught Exception:', error);
+    });
+    process.on('unhandledRejection', (reason, promise) => {
+        console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
 }
 
 main().catch(console.error);
